@@ -18,8 +18,8 @@ lab1test
 
 03. libtvhN3249.so
 -------------
-Пример плагина для лабораторной № 1. Позволять в указанном каталоге найти файлы, который в форматах elf,pe32, coff and a.out.
-//An example of a plug-in for laboratory No. 1. Allow in the specified directory to find files in the formats elf, pe32, coff and a.out.
+Пример плагина для лабораторной № 1. Позволять в указанном каталоге найти файлы, который в форматах elf,pe32, coff and a.out (еще форматы gif, png, jpeg и bmp).
+//An example of a plug-in for laboratory No. 1. Allow in the specified directory to find files in the formats elf, pe32, coff and a.out (more formats gif, png, jpeg and bmp).
 
 Поддерживаемые опции: //Supported options:
  --exe v
