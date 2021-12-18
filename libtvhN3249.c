@@ -140,7 +140,8 @@ int plugin_process_file(const char *fname,
           
     }
     
-    fread(magic,1,4,fp);
+    size_t k = fread(magic,1,4,fp);
+    k++;
     fclose(fp);
     // Extract characters from file and store in character c
     int loop;

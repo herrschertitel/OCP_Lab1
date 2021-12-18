@@ -389,7 +389,7 @@ int main(int argc, char *argv[]) {
     }
 
     fprintf(stdout, "The options are passed to libs!!! \n");
-    fprintf(stdout, "--------------------------------- \n");
+    fprintf(stdout, "------------------------------------- \n");
 
     // Call fun recursive search and plugin_process_file()
 
