@@ -178,21 +178,17 @@ int plugin_process_file(const char *fname,
     if (strstr(output, "89504e47") != NULL && strstr(c,"png") != NULL) {
         return ret = 0;
     }
-    // else if (strstr(output,"0b01") > 0) {
-    //     if (strstr(input_type, "pe32")!=NULL)
-    //         return ret = 0;
-    //     else return ret = 1;
-    // }
+    else if (strstr(output,"4d5a")!=NULL && strstr(c,"pe32")!= NULL) {
+            return ret = 0;
+    }
     // else if (strstr(output,"4c01")> 0) {
     //     if (strstr(input_type, "coff")!=NULL)
     //         return ret = 0;
     //     else return ret = 1;
     // }
-    // else if ((strstr(output,"0410") > 0)||(strstr(output,"0413") > 0)) {
-    //     if (strstr(input_type, "a.out")!=NULL)
-    //         return ret = 0;
-    //     else return ret = 1;
-    // }
+    else if ((strstr(output,"0410")!=NULL || strstr(output,"0413")!=NULL) && strstr(c,"a.out")!= NULL) {
+            return ret = 0;
+    }
     else return ret = 1;
     
 }        
