@@ -24,7 +24,7 @@ lab1test
 Поддерживаемые опции: //Supported options:
  --exe v
 *Пример запуска:
- $ LAB1DEBUG=1 ./lab1tvhN3249 -P ./ --exe pe32,coff  ./file_test 
+ $ LAB1DEBUG=1 ./lab1tvhN3249 --exe pe32,coff  ./file_test 
  
 04. libtvhN3249-2.so
 -------------
@@ -32,7 +32,7 @@ lab1test
 //find all files with a size less than the specified size in the catalog
 
 *Пример запуска:
- $ LAB1DEBUG=1 ./lab1tvhN3249 -P ./ --size 1000 ./file_test 
+ $ LAB1DEBUG=1 ./lab1tvhN3249 --size 1000 ./file_test 
  
 05. Опции A O N
 -------------
