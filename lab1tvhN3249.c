@@ -1,4 +1,3 @@
-
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -11,15 +10,15 @@ typedef int (*ppf_func_t)(const char*, struct option*, size_t); //for plugin_pro
 typedef int (*pgi_func_t)(struct plugin_info*); // for plugin_get_info;
 
 struct longopt {
-    struct option *all_opt ; // все опции любого плагина
-    size_t all_opt_len ; // количество опции любого
-    struct option *opts_to_pass ; // опции которые удовлетроряют условия любого плагина
-    size_t opts_to_pass_len ; // количество опции которые удовлетроряют условия любого плагина
+    struct option *all_opt ; //array for all longopt
+    size_t all_opt_len ;
+    struct option *opts_to_pass ;
+    size_t opts_to_pass_len ;
     ppf_func_t func;
     pgi_func_t info;
 };
 
-int count_so (const char* dirname, int* len) { // найти и считать количество все файлы  .so
+int count_so (const char* dirname, int* len) {
     DIR* dir = opendir(dirname);
     if (dir == NULL) {
         fprintf(stderr, " ERROR: No directory %s\n", dirname);
@@ -40,7 +39,7 @@ int count_so (const char* dirname, int* len) { // найти и считать �
     return 0;
 }
 
-int option_p (const char* dirname, void* dl[], int len) { // подлючиться к всем файлам .so
+int option_p (const char* dirname, void* dl[], int len) {
     DIR* dir = opendir(dirname);
     if (dir == NULL) {
         fprintf(stderr, " ERROR: No directory %s\n", dirname);
@@ -75,68 +74,75 @@ int option_p (const char* dirname, void* dl[], int len) { // подлючить�
 //fun file recursive search;
 int res_file (const char* dirname, int tlen, struct longopt sup_all[], int is_or, int is_not) {
     DIR* dir = opendir(dirname);
+    
+    /*
     if (dir == NULL) {
         fprintf(stderr, " ERROR: No directory %s\n", dirname);
         return -1;
     }
-    struct dirent* entity;
-    entity = readdir(dir);
-    while (entity != NULL) {
+    */
     
-        if(strcmp(entity->d_name, ".") != 0 && strcmp(entity->d_name, "..") != 0){
-             // printf("lol : %s\n",entity->d_name);
-            size_t path_len = strlen(dirname) + strlen(entity->d_name) + 2;
-            char* path = malloc(path_len);
-            snprintf(path, path_len, "%s/%s", dirname, entity->d_name);
-	    // если это  entity -> каталог
-            if(entity->d_type == DT_DIR){ 
-                int res = res_file(path, tlen, sup_all, is_or, is_not);
-                if (res){
-                    free(path);
-                    return -1;
-                }
-            }
-	    // если это entity -> файл 
-            if(entity->d_type == DT_REG) {
-                int ret_true = 0; // if plugin retrun true ret++;
-                int plugins_call = 0; //_count the number of plugins called
-                // для каждого файла мы передадим все динамические библиотеки
-                for (int i=0; i < tlen; i++){
-                    if(sup_all[i].opts_to_pass_len > 0) {
-                        plugins_call++ ;
-                        int ret_fun = sup_all[i].func(path, sup_all[i].opts_to_pass, sup_all[i].opts_to_pass_len);
-                     //   fprintf(stdout, "%d %d \n", i , ret_fun);
-                        if (ret_fun == 0) ret_true++;
-                        if (ret_fun < 0){
-                            free(path);
-                            errno = 0;
-                            fprintf(stdout, "Error information: %s\n", strerror(errno));
-                            return -1;
-                        }
+
+    if(dir !=NULL ){
+
+        struct dirent* entity;
+        entity = readdir(dir);
+        while (entity != NULL) {
+        
+            if(strcmp(entity->d_name, ".") != 0 && strcmp(entity->d_name, "..") != 0){
+                 // printf("lol : %s\n",entity->d_name);
+                size_t path_len = strlen(dirname) + strlen(entity->d_name) + 2;
+                char* path = malloc(path_len);
+                snprintf(path, path_len, "%s/%s", dirname, entity->d_name);
+
+                if(entity->d_type == DT_DIR){ 
+                    int res = res_file(path, tlen, sup_all, is_or, is_not);
+                    if (res){
+                        free(path);
+                        return -1;
                     }
                 }
-                
-                if(plugins_call){
-                    // short_opt A and no opt; 
-                    if ( ret_true == plugins_call && is_or == 0 && is_not == 0) fprintf(stdout, "The file meets the requirements: %s\n", entity->d_name);
-                    //short_opt O;
-                    else if (ret_true > 0 && is_or == 1 && is_not == 0) fprintf(stdout, "The file meets the requirements: %s\n", entity->d_name);
-                    //short_opt NA;
-                    else if (ret_true < plugins_call && is_or ==0 && is_not ==1) fprintf(stdout, "The file meets the requirements: %s\n", entity->d_name);
-                    //short_opt NO;
-                    else if (ret_true == 0 && is_or == 1 && is_not == 1) fprintf(stdout, "The file meets the requirements: %s\n", entity->d_name);
 
+                if(entity->d_type == DT_REG) {
+                    int ret_true = 0; // if plugin retrun true ret++;
+                    int plugins_call = 0; //_count the number of plugins called
+                    for (int i=0; i < tlen; i++){
+                        if(sup_all[i].opts_to_pass_len > 0) {
+                            plugins_call++ ;
+                            int ret_fun = sup_all[i].func(path, sup_all[i].opts_to_pass, sup_all[i].opts_to_pass_len);
+                         //   fprintf(stdout, "%d %d \n", i , ret_fun);
+                            if (ret_fun == 0) ret_true++;
+                            if (ret_fun < 0){
+                                free(path);
+                                errno = 0;
+                                fprintf(stdout, "Error information: %s\n", strerror(errno));
+                                return -1;
+                            }
+                        }
+                    }
+                    
+                    if(plugins_call){
+                        // short_opt A and no opt;
+                        if ( ret_true == plugins_call && is_or == 0 && is_not == 0) fprintf(stdout, "%s\n", entity->d_name);
+                        //short_opt O;
+                        else if (ret_true > 0 && is_or == 1 && is_not == 0) fprintf(stdout, "%s\n", entity->d_name);
+                        //short_opt NA;
+                        else if (ret_true < plugins_call && is_or ==0 && is_not ==1) fprintf(stdout, "%s\n", entity->d_name);
+                        //short_opt NO;
+                        else if (ret_true == 0 && is_or == 1 && is_not == 1) fprintf(stdout, "%s\n", entity->d_name);
+
+                    }
+
+                    
                 }
 
-                
-            }
+                free(path);
+            }  
+            entity = readdir(dir);
+        }
 
-            free(path);
-        }  
-        entity = readdir(dir);
+        closedir(dir);
     }
-
-    closedir(dir);
     return 0;
 }
 
@@ -145,7 +151,21 @@ int main(int argc, char *argv[]) {
     struct longopt *sup_all = 0;
     char *f_name = 0;
     opterr = 0;
- 
+    
+    int  is_o = 0, is_n = 0 , is_v = 0, is_h = 0 ,is_P = 0 ;
+    // short_option A is_a = 1 (if is_o == 0 and is_n == 0)
+
+    int len = 0;
+
+    void** dl = 0;
+
+    char **new_argv = (char**) malloc (argc * sizeof(char*));
+    if(!new_argv){
+        fprintf(stdout,"ERROR: could not allocate for argv copy\n");
+    }
+
+    memcpy(new_argv, argv, argc * sizeof(char*));
+
     // Minimum number of arguments is 2: 
     // $ program_name --opts file to ch
     if (argc < 2) {        
@@ -157,37 +177,19 @@ int main(int argc, char *argv[]) {
                 fprintf(stdout, "\t\t-N: Inverting the search term (after combining options plugins with -A or -O)\n");
                 fprintf(stdout, "\t\t-v: Displaying performer's full name, group number,lab version number o\n");
                 fprintf(stdout, "\t\t-h: Display help for options.\n");
-        fprintf(stdout, "Long_options in plugin 1:\n");
-                fprintf(stdout,"\t\t --mac-addr\t\t Target id of mac and check mac-addr\n");
-        return 0;
+        fprintf(stdout, "Long_options in plugin:\n");
+        is_h = 1;
+        goto START;
+
     }
     
-    int len = 0;
-   // if (count_so(".", &len)) {
-    //    fprintf (stderr, "ERROR: unable to count in curren dir\n");
-     //   return -1;
-    //}
-     
-    void** dl = 0;
-   // if (option_p(".", dl, len)){
-    //    fprintf (stderr,"ERROR: unable to dlopen libs in a current dir\n");
-    //}
-
-    char **new_argv = (char**) malloc (argc * sizeof(char*));
-    if(!new_argv){
-        fprintf(stdout,"ERROR: could not allocate for argv copy\n");
-    }
-
-    int  is_o = 0, is_n = 0 , is_v = 0, is_h = 0 ,is_P =0;
-    // short_option A is_a = 1 (if is_o == 0 and is_n == 0)
-
-
-    memcpy(new_argv, argv, argc * sizeof(char*));
+    
     
     int ret_shrt = 0;
     while((ret_shrt = getopt(argc,new_argv, "P:vhAON"))!=-1)
-           
+        
     {
+
         switch(ret_shrt){
 
             case 'P':
@@ -203,12 +205,15 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "ERROR: unable to open file.so\n");
                     goto END;
                 }
-
                 if( optind == argc ) {
+                    
                     is_h = 1;
                     goto START;
                 }
-                if(argv[optind][1] ==  '-') goto START;
+                if(argv[optind][1] ==  '-') {
+                   
+                   goto START;
+                }
                
                 break;
             case 'v':
@@ -225,7 +230,6 @@ int main(int argc, char *argv[]) {
                 break;
             case 'A':
                 fprintf(stdout, "Short option -%c is detected!\n", ret_shrt);
-
                 if(argv[optind][1] ==  '-') goto START;
                 break;
             case 'O':
@@ -238,24 +242,19 @@ int main(int argc, char *argv[]) {
                 is_n = 1;
                 if(argv[optind][1] ==  '-') goto START;
                 break;
-            default:
-                fprintf(stdout, "No short options\n");
-                goto START;          
+            
         }
-    
-    
 
     }
     
 
-    START: ;
+    START: 
 
     if(!is_P) {
         if (count_so(".", &len)) {
             fprintf (stderr, "ERROR: unable to count in curren dir\n");
             goto END;
         }
-
         dl = calloc (len, sizeof(void*));
         if (option_p(".", dl, len)){
             fprintf (stderr,"ERROR: unable to dlopen libs in a current dir\n");
@@ -264,8 +263,6 @@ int main(int argc, char *argv[]) {
     }
     
     sup_all = calloc (len, sizeof(struct longopt));
-	
-
 
     for (int i = 0; i < len; i++){
 
@@ -345,17 +342,18 @@ int main(int argc, char *argv[]) {
 
 
     // Now process options for the lib
-
+   
+   
     for (int i = 0; i < len; i++) {
-        optind = 1;
+        optind = 1;   
         memcpy(new_argv, argv, argc * sizeof(char*));
         while (1){
             int opt_ind = 0;
-            int ret = getopt_long_only(argc, new_argv, " ", sup_all[i].all_opt, &opt_ind);
+            int ret = getopt_long_only(argc, new_argv, "", sup_all[i].all_opt, &opt_ind);
+          
             if (ret == -1) break;
-
             if(ret != 0) continue;
-
+         
             // Check how many options we got up to this moment
             if ((size_t) sup_all[i].opts_to_pass_len == sup_all[i].all_opt_len){
                 fprintf(stderr, "ERROR: too many options!\n");
@@ -364,6 +362,7 @@ int main(int argc, char *argv[]) {
 
             // Add this option to array of options actually passed to plugin_process_file()
             memcpy(sup_all[i].opts_to_pass + sup_all[i].opts_to_pass_len, sup_all[i].all_opt + opt_ind, sizeof(struct option));
+         
 
             // Argument (if any) is passed in flag
             if ((sup_all[i].all_opt + opt_ind)->has_arg) {
@@ -374,6 +373,7 @@ int main(int argc, char *argv[]) {
 
             sup_all[i].opts_to_pass_len++;
         }
+       
 
     }
 
@@ -389,7 +389,8 @@ int main(int argc, char *argv[]) {
     }
 
     fprintf(stdout, "The options are passed to libs!!! \n");
-    fprintf(stdout, "------------------------------------- \n");
+    fprintf(stdout,"--------------------------------------\n");
+    fprintf(stdout,"The list of files that satisfy the requirements is:\n");
 
     // Call fun recursive search and plugin_process_file()
 
@@ -397,7 +398,7 @@ int main(int argc, char *argv[]) {
     errno = 0;
     f_name = strdup(argv[argc-1]);
     int ret_main = res_file(f_name, len, sup_all, is_o, is_n);
-    fprintf (stdout, "------------------------------------- \n");
+    fprintf(stdout,"--------------------------------------\n");
     fprintf (stdout, "fun res_file() returned %d\n",ret_main);
     if(ret_main < 0){
         fprintf(stderr, "error infomation: %s\n", strerror(errno));
@@ -432,4 +433,3 @@ int main(int argc, char *argv[]) {
 
 
    
-
